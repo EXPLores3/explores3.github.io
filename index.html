@@ -2,60 +2,73 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>英语学习系统 - 文本转语音与词典查询</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             max-width: 1000px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 0;
             color: #333;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            line-height: 1.6;
         }
         
         .container {
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 30px;
+            border-radius: 15px 15px 0 0;
+            padding: 20px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            min-height: 100vh;
         }
         
         h1 {
             color: #2c3e50;
             text-align: center;
             margin-bottom: 10px;
-            font-size: 28px;
+            font-size: 24px;
+            padding: 10px 0;
         }
         
         .subtitle {
             text-align: center;
             color: #666;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-style: italic;
+            font-size: 14px;
         }
         
         .controls {
-            margin: 20px 0;
+            margin: 15px 0;
             background-color: #fff;
-            padding: 25px;
+            padding: 15px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
         }
         
         textarea {
             width: 100%;
-            height: 220px;
+            height: 200px;
             margin: 10px 0;
-            padding: 20px;
+            padding: 15px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
-            font-size: 18px;
+            font-size: 16px;
             line-height: 1.6;
             resize: vertical;
             box-sizing: border-box;
             transition: border-color 0.3s;
+            font-family: inherit;
         }
         
         textarea:focus {
@@ -67,17 +80,18 @@
         .parameter {
             display: flex;
             align-items: center;
-            margin: 20px 0;
+            margin: 15px 0;
             justify-content: flex-start;
-            gap: 15px;
+            gap: 10px;
         }
         
         .parameter label {
-            min-width: 90px;
+            min-width: 70px;
             text-align: right;
-            margin-right: 15px;
+            margin-right: 5px;
             color: #555;
             font-weight: 600;
+            font-size: 14px;
         }
         
         select {
@@ -87,6 +101,7 @@
             background-color: #fff;
             font-size: 14px;
             transition: border-color 0.3s;
+            flex: 1;
         }
         
         select:focus {
@@ -95,17 +110,17 @@
         }
         
         #voiceSelect {
-            width: 460px;
+            width: 100%;
         }
         
         #playCount {
-            width: 130px;
+            width: 120px;
         }
         
         input[type="range"] {
-            width: 300px;
+            flex: 1;
             height: 8px;
-            margin: 0 15px;
+            margin: 0 10px;
             -webkit-appearance: none;
             background: linear-gradient(to right, #667eea, #764ba2);
             border-radius: 4px;
@@ -131,48 +146,55 @@
             border-radius: 4px;
             font-weight: 600;
             color: #667eea;
+            font-size: 14px;
         }
         
         .status-display {
-            margin: 25px 0;
-            padding: 15px 20px;
+            margin: 15px 0;
+            padding: 12px 15px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 500;
             text-align: center;
         }
         
+        /* 按钮样式 */
         .buttons-container {
-            margin-top: 25px;
+            margin-top: 15px;
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 10px;
             flex-wrap: wrap;
         }
         
         .special-buttons {
-            margin-top: 20px;
-            padding-top: 20px;
+            margin-top: 15px;
+            padding-top: 15px;
             border-top: 2px solid #f0f0f0;
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 10px;
             flex-wrap: wrap;
         }
         
         button {
-            padding: 12px 25px;
+            padding: 12px 20px;
             border: none;
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
             color: white;
             background: linear-gradient(135deg, #4CAF50, #45a049);
             box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-width: 120px;
         }
         
         button:hover {
@@ -199,8 +221,9 @@
             background: white;
             border: 2px solid #667eea;
             border-radius: 12px;
-            padding: 25px;
-            max-width: 450px;
+            padding: 15px;
+            max-width: 90%;
+            width: 320px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             z-index: 1000;
             font-size: 14px;
@@ -215,17 +238,17 @@
         .word-popup .word-header {
             display: flex;
             align-items: baseline;
-            gap: 15px;
+            gap: 10px;
             flex-wrap: wrap;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 15px;
+            padding-bottom: 10px;
         }
         
         .word-popup h3 {
             margin: 0;
             color: #667eea;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
         }
         
@@ -235,6 +258,7 @@
             background: #f8f9fa;
             padding: 4px 8px;
             border-radius: 4px;
+            font-size: 13px;
         }
         
         .word-popup .audio-btn {
@@ -245,8 +269,9 @@
             cursor: pointer;
             color: white;
             font-size: 13px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             transition: all 0.3s;
+            width: 100%;
         }
         
         .word-popup .audio-btn:hover {
@@ -255,55 +280,56 @@
         }
         
         .word-popup .meanings {
-            max-height: 350px;
+            max-height: 250px;
             overflow-y: auto;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         
         .word-popup .meaning-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             background: #fafbfc;
-            padding: 15px;
+            padding: 10px;
             border-radius: 8px;
         }
         
         .word-popup .part-of-speech {
             color: #667eea;
             font-weight: 700;
-            margin-bottom: 10px;
-            font-size: 16px;
+            margin-bottom: 8px;
+            font-size: 15px;
         }
         
         .word-popup ol {
             margin: 0;
-            padding-left: 25px;
+            padding-left: 20px;
             color: #333;
         }
         
         .word-popup ol li {
-            margin: 10px 0;
+            margin: 8px 0;
             line-height: 1.5;
         }
         
         .word-popup .definition {
             color: #333;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
         }
         
         .word-popup .example {
             color: #666;
             font-style: italic;
             background: #e8f4fd;
-            padding: 8px;
+            padding: 6px;
             border-left: 3px solid #667eea;
-            margin-top: 8px;
+            margin-top: 6px;
             border-radius: 4px;
+            font-size: 13px;
         }
         
         .word-popup .close-btn {
             width: 100%;
-            margin-top: 20px;
-            padding: 12px;
+            margin-top: 10px;
+            padding: 10px;
             background: linear-gradient(135deg, #95a5a6, #7f8c8d);
             border: none;
             border-radius: 6px;
@@ -318,68 +344,133 @@
         
         .error-message {
             position: fixed;
-            bottom: 30px;
-            right: 30px;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
             background: linear-gradient(135deg, #e74c3c, #c0392b);
             color: white;
-            padding: 15px 25px;
+            padding: 12px 20px;
             border-radius: 8px;
             animation: fadeIn 0.3s ease;
             box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
             font-weight: 600;
+            z-index: 900;
+            max-width: 90%;
+            text-align: center;
         }
         
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translate(-50%, 30px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
         }
         
         .learning-tip {
             background: linear-gradient(135deg, #f093fb, #f5576c);
             color: white;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
-            margin-bottom: 20px;
-            <!-- text-align: center; -->
+            margin-bottom: 15px;
             font-weight: 500;
+            font-size: 14px;
         }
         
+        /* 移动端底部导航 */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            padding: 10px 0;
+            z-index: 800;
+        }
+        
+        .mobile-nav-buttons {
+            display: flex;
+            justify-content: space-around;
+        }
+        
+        .mobile-nav button {
+            flex: 1;
+            margin: 0 5px;
+            padding: 12px 5px;
+            font-size: 12px;
+            min-width: auto;
+        }
+        
+        /* 响应式设计 */
         @media (max-width: 768px) {
             body {
-                padding: 10px;
+                padding-bottom: 80px; /* 为底部导航留出空间 */
             }
             
             .container {
-                padding: 20px;
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 22px;
             }
             
             .parameter {
                 flex-direction: column;
                 align-items: flex-start;
+                gap: 5px;
             }
             
             .parameter label {
                 text-align: left;
-                margin-bottom: 8px;
+                margin-bottom: 5px;
+                font-size: 13px;
+                min-width: auto;
             }
             
-            #voiceSelect {
+            #voiceSelect, #playCount {
                 width: 100%;
             }
             
             input[type="range"] {
                 width: 100%;
-                margin: 10px 0;
+                margin: 5px 0;
             }
             
             .buttons-container,
             .special-buttons {
-                flex-direction: column;
-                align-items: center;
+                display: none; /* 在移动设备上隐藏顶部按钮组 */
             }
             
-            button {
-                width: 200px;
+            .mobile-nav {
+                display: block; /* 在移动设备上显示底部导航 */
+            }
+            
+            textarea {
+                height: 180px;
+                font-size: 15px;
+            }
+            
+            .learning-tip {
+                font-size: 13px;
+                padding: 10px;
+            }
+            
+            .status-display {
+                font-size: 13px;
+                padding: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .mobile-nav button {
+                padding: 10px 2px;
+                font-size: 11px;
+                gap: 3px;
+            }
+            
+            .word-popup {
+                width: 90%;
+                max-width: none;
             }
         }
     </style>
@@ -428,15 +519,32 @@
             
             <div class="status-display" id="statusDisplay">系统就绪 - 开始你的英语学习之旅！</div>
             
+            <!-- 桌面端按钮组 -->
             <div class="buttons-container">
-                <button onclick="speak()">🔊 开始朗读</button>
-                <button onclick="pause()">⏸️ 暂停</button>
-                <button onclick="resume()">▶️ 继续</button>
-                <button onclick="stop()">⏹️ 停止</button>
-                
-                <button class="special-button" onclick="speakSelectedText()">📖 读选中文本</button>
-                <button class="special-button" onclick="speakCurrentParagraph()">📄 读当前段落</button>
+                <button onclick="speak()"><i class="fas fa-volume-up"></i> 开始朗读</button>
+                <button onclick="pause()"><i class="fas fa-pause"></i> 暂停</button>
+                <button onclick="resume()"><i class="fas fa-play"></i> 继续</button>
+                <button onclick="stop()"><i class="fas fa-stop"></i> 停止</button>
             </div>
+            
+            <div class="special-buttons">
+                <button class="special-button" onclick="speakSelectedText()"><i class="fas fa-highlighter"></i> 读选中文本</button>
+                <button class="special-button" onclick="speakCurrentParagraph()"><i class="fas fa-paragraph"></i> 读当前段落</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 移动端底部导航 -->
+    <div class="mobile-nav">
+        <div class="mobile-nav-buttons">
+            <button onclick="speak()"><i class="fas fa-volume-up"></i><br>朗读</button>
+            <button onclick="pause()"><i class="fas fa-pause"></i><br>暂停</button>
+            <button onclick="resume()"><i class="fas fa-play"></i><br>继续</button>
+            <button onclick="stop()"><i class="fas fa-stop"></i><br>停止</button>
+        </div>
+        <div class="mobile-nav-buttons" style="margin-top: 5px;">
+            <button class="special-button" onclick="speakSelectedText()"><i class="fas fa-highlighter"></i><br>选中文本</button>
+            <button class="special-button" onclick="speakCurrentParagraph()"><i class="fas fa-paragraph"></i><br>当前段落</button>
         </div>
     </div>
 
@@ -493,8 +601,18 @@
 
             // 初始化当前语音
             if (!currentVoice && voices.length > 0) {
-                currentVoice = voices[0];
-                voiceSelect.selectedIndex = 0;
+                // 尝试找到英语语音作为默认
+                const englishVoice = voices.find(voice => 
+                    voice.lang.startsWith('en-')
+                );
+                currentVoice = englishVoice || voices[0];
+                
+                // 选中当前语音
+                Array.from(voiceSelect.options).forEach(option => {
+                    if (option.getAttribute('data-voice-index') == voices.indexOf(currentVoice)) {
+                        option.selected = true;
+                    }
+                });
             }
         }
 
@@ -528,6 +646,12 @@
 
         // 显示单词释义
         function showWordDefinition(word, data) {
+            // 移除已存在的弹窗
+            const existingPopup = document.querySelector('.word-popup');
+            if (existingPopup) {
+                existingPopup.remove();
+            }
+            
             let popup = document.createElement('div');
             popup.className = 'word-popup';
             
@@ -542,7 +666,7 @@
             const audioUrl = data.phonetics?.find(p => p.audio)?.audio;
             if (audioUrl) {
                 content += `<button class="audio-btn" onclick="playAudio('${audioUrl}')">
-                    🔊 播放发音
+                    <i class="fas fa-volume-up"></i> 播放发音
                 </button>`;
             }
             
@@ -570,27 +694,34 @@
             }
             
             // 添加关闭按钮
-            content += '<button class="close-btn" onclick="this.parentElement.remove()">关闭</button>';
+            content += '<button class="close-btn" onclick="this.parentElement.remove()"><i class="fas fa-times"></i> 关闭</button>';
             
             popup.innerHTML = content;
             document.body.appendChild(popup);
             
-            // 定位弹出框
-            const selection = window.getSelection();
-            const range = selection.getRangeAt(0);
-            const rect = range.getBoundingClientRect();
-            
-            // 调整弹出位置，确保在可视区域内
-            let left = rect.left + window.scrollX;
-            let top = rect.bottom + window.scrollY + 10;
-            
-            // 检查右边界
-            if (left + 450 > window.innerWidth) {
-                left = window.innerWidth - 470;
+            // 定位弹出框，在移动设备上居中显示
+            if (window.innerWidth <= 768) {
+                popup.style.left = '50%';
+                popup.style.top = '50%';
+                popup.style.transform = 'translate(-50%, -50%)';
+            } else {
+                // 桌面端定位逻辑
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                
+                // 调整弹出位置，确保在可视区域内
+                let left = rect.left + window.scrollX;
+                let top = rect.bottom + window.scrollY + 10;
+                
+                // 检查右边界
+                if (left + 450 > window.innerWidth) {
+                    left = window.innerWidth - 470;
+                }
+                
+                popup.style.left = `${left}px`;
+                popup.style.top = `${top}px`;
             }
-            
-            popup.style.left = `${left}px`;
-            popup.style.top = `${top}px`;
         }
 
         // 播放音频
@@ -600,6 +731,12 @@
 
         // 显示错误信息
         function showError(message) {
+            // 移除已存在的错误提示
+            const existingError = document.querySelector('.error-message');
+            if (existingError) {
+                existingError.remove();
+            }
+            
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
             errorDiv.textContent = message;
@@ -795,6 +932,17 @@
             playCount = totalPlayCount;
             updateStatus('已停止 ⏹️');
         }
+
+        // 处理移动设备上的触摸操作
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.95)';
+            });
+            
+            button.addEventListener('touchend', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
     </script>
 </body>
 </html>
