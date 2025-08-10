@@ -48,6 +48,17 @@
             font-size: 14px;
         }
         
+        .browser-alert {
+            background: #fff3cd;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            border: 1px solid #ffeeba;
+            display: none;
+        }
+        
         .controls {
             margin: 15px 0;
             background-color: #fff;
@@ -160,6 +171,22 @@
             text-align: center;
         }
         
+        .fallback-option {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .fallback-option input {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+        }
+        
         /* 按钮样式 */
         .buttons-container {
             margin-top: 15px;
@@ -223,7 +250,7 @@
             border-radius: 12px;
             padding: 15px;
             max-width: 90%;
-            width: 320px;
+            width: 380px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             z-index: 1000;
             font-size: 14px;
@@ -233,6 +260,33 @@
         @keyframes popupShow {
             from { opacity: 0; transform: scale(0.9) translateY(-10px); }
             to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        
+        .translation-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .translation-tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .translation-tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+        
+        .translation-content {
+            display: none;
+        }
+        
+        .translation-content.active {
+            display: block;
         }
         
         .word-popup .word-header {
@@ -250,6 +304,13 @@
             color: #667eea;
             font-size: 20px;
             font-weight: 700;
+        }
+        
+        .word-chinese {
+            color: #e74c3c;
+            font-weight: 600;
+            margin-top: 5px;
+            font-size: 16px;
         }
         
         .word-popup .phonetic {
@@ -299,6 +360,13 @@
             font-size: 15px;
         }
         
+        .part-of-speech-chinese {
+            color: #7f8c8d;
+            font-size: 13px;
+            margin-left: 5px;
+            font-weight: normal;
+        }
+        
         .word-popup ol {
             margin: 0;
             padding-left: 20px;
@@ -306,7 +374,7 @@
         }
         
         .word-popup ol li {
-            margin: 8px 0;
+            margin: 12px 0;
             line-height: 1.5;
         }
         
@@ -315,14 +383,32 @@
             margin-bottom: 5px;
         }
         
+        .definition-chinese {
+            color: #34495e;
+            margin-top: 5px;
+            font-size: 13px;
+            padding-left: 5px;
+            border-left: 2px solid #bdc3c7;
+        }
+        
         .word-popup .example {
             color: #666;
             font-style: italic;
             background: #e8f4fd;
             padding: 6px;
             border-left: 3px solid #667eea;
-            margin-top: 6px;
+            margin-top: 8px;
             border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .example-chinese {
+            color: #7f8c8d;
+            font-style: normal;
+            background: #f8f9fa;
+            padding: 6px;
+            margin-top: 5px;
+            border-left: 3px solid #bdc3c7;
             font-size: 13px;
         }
         
@@ -340,6 +426,20 @@
         
         .word-popup .close-btn:hover {
             background: linear-gradient(135deg, #7f8c8d, #6c7b7d);
+        }
+        
+        .loading-translation {
+            color: #667eea;
+            text-align: center;
+            padding: 10px;
+            font-style: italic;
+        }
+        
+        .error-translation {
+            color: #e74c3c;
+            text-align: center;
+            padding: 10px;
+            font-style: italic;
         }
         
         .error-message {
@@ -398,6 +498,21 @@
             padding: 12px 5px;
             font-size: 12px;
             min-width: auto;
+        }
+        
+        /* 音频加载动画 */
+        .loading-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         
         /* 响应式设计 */
@@ -459,6 +574,11 @@
                 font-size: 13px;
                 padding: 10px;
             }
+            
+            .word-popup {
+                max-height: 80vh;
+                overflow-y: auto;
+            }
         }
         
         @media (max-width: 480px) {
@@ -478,15 +598,24 @@
 <body>
     <div class="container">
         <h1>英语学习系统</h1>
-        <p class="subtitle">文本转语音 + 实时词典查询</p>
+        <p class="subtitle">文本转语音 + 实时词典查询（带中文翻译）</p>
+        
+        <div class="browser-alert" id="browserAlert">
+            <i class="fas fa-info-circle"></i> 检测到您的浏览器可能不支持语音合成，建议使用Chrome浏览器以获得最佳体验。
+        </div>
         
         <div class="learning-tip">
-            💡 (1)如果“开始朗读”不发音，请考虑选择语音是否不当。(2)可以设置播放次数，调整语速、音量和音调。(2)双击英文单词可查看英文释义、音标（这项功能需要联网，使用 Free Dictionary API实现）。
+            💡 (1)如果“开始朗读”不发音，请尝试切换语音或勾选备用语音服务。(2)可以设置播放次数，调整语速、音量和音调。(3)双击英文单词可查看释义、音标和中文翻译。
         </div>
         
         <div class="controls">
-            <label>你可以在下面文本区域输入文字，或者往其中粘贴复制的文本：</label>
-            <textarea id="textToSpeak" placeholder="请输入英文文本开始学习...">Welcome to the English Learning System!This is an interactive text-to-speech application with dictionary lookup.You can practice pronunciation, adjust speech parameters, and learn new vocabulary.Double-click on any word like "pronunciation" or "vocabulary" to see its definition and hear how it sounds.</textarea>
+            <label>请输入或粘贴英文文本：</label>
+            <textarea id="textToSpeak" placeholder="请输入英文文本开始学习...">Welcome to the English Learning System! This is an interactive text-to-speech application with dictionary lookup. You can practice pronunciation, adjust speech parameters, and learn new vocabulary. Double-click on any word to see its definition.</textarea>
+            
+            <div class="fallback-option">
+                <input type="checkbox" id="useFallback" />
+                <label for="useFallback">使用备用语音服务（当系统语音不可用时推荐）</label>
+            </div>
             
             <div class="parameter">
                 <label for="voiceSelect">语音：</label>
@@ -549,20 +678,80 @@
     </div>
 
     <script>
+        // 全局变量
         let speechSynth = window.speechSynthesis;
         let utterance = null;
         let currentVoice = null;
         let voices = [];
         let playCount = 1;
         let totalPlayCount = 1;
-
-        // 加载语音列表
-        function loadVoices() {
-            voices = speechSynth.getVoices();
+        let fallbackAudio = null;
+        let isUsingFallback = false;
+        let isSpeechSupported = true;
+        
+        // 词性英文到中文的映射
+        const partOfSpeechMap = {
+            "noun": "名词",
+            "verb": "动词",
+            "adjective": "形容词",
+            "adverb": "副词",
+            "preposition": "介词",
+            "conjunction": "连词",
+            "pronoun": "代词",
+            "interjection": "感叹词",
+            "determiner": "限定词",
+            "numeral": "数词",
+            "article": "冠词"
+        };
+        
+        // 检测浏览器是否支持SpeechSynthesis
+        function checkSpeechSupport() {
+            if (!('speechSynthesis' in window)) {
+                document.getElementById('browserAlert').style.display = 'block';
+                document.getElementById('useFallback').checked = true;
+                isSpeechSupported = false;
+                return false;
+            }
+            return true;
+        }
+        
+        // 加载语音列表（带重试机制）
+        function loadVoicesWithRetry() {
+            let retryCount = 0;
+            const maxRetries = 10; // 最多重试10次（5秒）
+            const interval = 500; // 每500ms重试一次
+            
+            function attemptLoad() {
+                // 主动触发语音加载
+                speechSynth.getVoices();
+                voices = speechSynth.getVoices();
+                
+                if (voices.length > 0) {
+                    // 加载成功，初始化语音列表
+                    initVoiceSelect(voices);
+                    return;
+                }
+                
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    setTimeout(attemptLoad, interval);
+                } else {
+                    // 重试失败，提示使用第三方API
+                    updateStatus("语音加载失败，建议使用备用语音服务");
+                    document.getElementById('browserAlert').style.display = 'block';
+                    document.getElementById('useFallback').checked = true;
+                }
+            }
+            
+            attemptLoad();
+        }
+        
+        // 初始化语音选择下拉框
+        function initVoiceSelect(voicesList) {
             let voiceSelect = document.getElementById('voiceSelect');
             
             // 对语音进行排序
-            voices.sort((a, b) => {
+            voicesList.sort((a, b) => {
                 if (a.lang < b.lang) return -1;
                 if (a.lang > b.lang) return 1;
                 return a.name.localeCompare(b.name);
@@ -570,7 +759,7 @@
 
             // 创建语言分组的对象
             let voicesByLang = {};
-            voices.forEach(voice => {
+            voicesList.forEach(voice => {
                 if (!voicesByLang[voice.lang]) {
                     voicesByLang[voice.lang] = [];
                 }
@@ -587,7 +776,7 @@
                 voicesByLang[lang].forEach((voice) => {
                     let option = document.createElement('option');
                     option.textContent = `${voice.name}`;
-                    option.setAttribute('data-voice-index', voices.indexOf(voice));
+                    option.setAttribute('data-voice-index', voicesList.indexOf(voice));
                     
                     if (currentVoice && voice.name === currentVoice.name) {
                         option.selected = true;
@@ -600,23 +789,23 @@
             });
 
             // 初始化当前语音
-            if (!currentVoice && voices.length > 0) {
+            if (!currentVoice && voicesList.length > 0) {
                 // 尝试找到英语语音作为默认
-                const englishVoice = voices.find(voice => 
+                const englishVoice = voicesList.find(voice => 
                     voice.lang.startsWith('en-')
                 );
-                currentVoice = englishVoice || voices[0];
+                currentVoice = englishVoice || voicesList[0];
                 
                 // 选中当前语音
                 Array.from(voiceSelect.options).forEach(option => {
-                    if (option.getAttribute('data-voice-index') == voices.indexOf(currentVoice)) {
+                    if (option.getAttribute('data-voice-index') == voicesList.indexOf(currentVoice)) {
                         option.selected = true;
                     }
                 });
             }
         }
 
-        // 添加双击事件监听
+        // 添加双击事件监听（查单词）
         document.getElementById('textToSpeak').addEventListener('dblclick', function(e) {
             const selectedText = window.getSelection().toString().trim();
             if (selectedText && /^[a-zA-Z]+$/.test(selectedText)) {
@@ -624,15 +813,36 @@
             }
         });
 
+        // 翻译文本（使用第三方翻译API）
+        async function translateText(text, fromLang = 'en', toLang = 'zh-CN') {
+            try {
+                // 使用公开的翻译API端点
+                const encodedText = encodeURIComponent(text);
+                const response = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${fromLang}&tl=${toLang}&dt=t&q=${encodedText}`);
+                const data = await response.json();
+                
+                if (data && data[0] && data[0][0] && data[0][0][0]) {
+                    return data[0][0][0];
+                }
+                return null;
+            } catch (error) {
+                console.error('翻译失败:', error);
+                return null;
+            }
+        }
+
         // 查询单词
         async function lookupWord(word) {
             updateStatus(`正在查询单词 "${word}"...`);
             try {
+                // 先获取单词基本信息
                 const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
                 const data = await response.json();
                 
                 if (data && data.length > 0) {
-                    showWordDefinition(word, data[0]);
+                    // 同时获取单词的中文翻译
+                    const wordTranslation = await translateText(word);
+                    showWordDefinition(word, data[0], wordTranslation);
                     updateStatus(`单词 "${word}" 查询成功！`);
                 } else {
                     showError('未找到该单词的释义');
@@ -644,8 +854,8 @@
             }
         }
 
-        // 显示单词释义
-        function showWordDefinition(word, data) {
+        // 显示单词释义（带翻译）
+        function showWordDefinition(word, data, wordTranslation) {
             // 移除已存在的弹窗
             const existingPopup = document.querySelector('.word-popup');
             if (existingPopup) {
@@ -655,28 +865,45 @@
             let popup = document.createElement('div');
             popup.className = 'word-popup';
             
-            // 构建释义内容
-            let content = `<div class="word-header">
+            // 构建单词头部（包含中文翻译）
+            let wordHeader = `<div class="word-header">
                 <h3>${word}</h3>
                 ${data.phonetics && data.phonetics[0]?.text ? 
                 `<span class="phonetic">${data.phonetics[0].text}</span>` : ''}
+                ${wordTranslation ? `<div class="word-chinese">${wordTranslation}</div>` : ''}
             </div>`;
             
             // 添加发音按钮（如果有音频链接）
             const audioUrl = data.phonetics?.find(p => p.audio)?.audio;
+            let audioButton = '';
             if (audioUrl) {
-                content += `<button class="audio-btn" onclick="playAudio('${audioUrl}')">
+                audioButton = `<button class="audio-btn" onclick="playAudio('${audioUrl}')">
                     <i class="fas fa-volume-up"></i> 播放发音
                 </button>`;
             }
             
-            // 添加释义
+            // 创建翻译标签页
+            let tabs = `
+                <div class="translation-tabs">
+                    <div class="translation-tab active" data-tab="original">英文释义</div>
+                    <div class="translation-tab" data-tab="translated">中文翻译</div>
+                </div>
+            `;
+            
+            // 构建原始英文释义内容
+            let originalContent = '<div class="translation-content active" id="original-content">';
             if (data.meanings && data.meanings.length > 0) {
-                content += '<div class="meanings">';
+                originalContent += '<div class="meanings">';
                 data.meanings.forEach(meaning => {
-                    content += `
+                    // 获取词性的中文翻译
+                    const posChinese = partOfSpeechMap[meaning.partOfSpeech.toLowerCase()] || '';
+                    
+                    originalContent += `
                         <div class="meaning-group">
-                            <div class="part-of-speech">${meaning.partOfSpeech}</div>
+                            <div class="part-of-speech">
+                                ${meaning.partOfSpeech}
+                                ${posChinese ? `<span class="part-of-speech-chinese">(${posChinese})</span>` : ''}
+                            </div>
                             <ol>
                                 ${meaning.definitions.map(def => `
                                     <li>
@@ -690,14 +917,42 @@
                         </div>
                     `;
                 });
-                content += '</div>';
+                originalContent += '</div>';
             }
+            originalContent += '</div>';
+            
+            // 构建带中文翻译的内容（初始为加载状态）
+            let translatedContent = `
+                <div class="translation-content" id="translated-content">
+                    <div class="loading-translation">正在翻译...请稍候</div>
+                </div>
+            `;
+            
+            // 组合所有内容
+            let content = wordHeader + audioButton + tabs + originalContent + translatedContent;
             
             // 添加关闭按钮
             content += '<button class="close-btn" onclick="this.parentElement.remove()"><i class="fas fa-times"></i> 关闭</button>';
             
             popup.innerHTML = content;
             document.body.appendChild(popup);
+            
+            // 加载中文翻译内容
+            loadTranslatedContent(data.meanings);
+            
+            // 为标签页添加切换事件
+            popup.querySelectorAll('.translation-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 移除所有标签和内容的active类
+                    popup.querySelectorAll('.translation-tab').forEach(t => t.classList.remove('active'));
+                    popup.querySelectorAll('.translation-content').forEach(c => c.classList.remove('active'));
+                    
+                    // 为当前标签和对应内容添加active类
+                    this.classList.add('active');
+                    const tabId = this.getAttribute('data-tab');
+                    popup.querySelector(`#${tabId}-content`).classList.add('active');
+                });
+            });
             
             // 定位弹出框，在移动设备上居中显示
             if (window.innerWidth <= 768) {
@@ -723,10 +978,65 @@
                 popup.style.top = `${top}px`;
             }
         }
+        
+        // 加载中文翻译内容
+        async function loadTranslatedContent(meanings) {
+            const translatedContent = document.getElementById('translated-content');
+            
+            try {
+                let content = '<div class="meanings">';
+                
+                // 逐个翻译每个释义
+                for (const meaning of meanings) {
+                    // 获取词性的中文翻译
+                    const posChinese = partOfSpeechMap[meaning.partOfSpeech.toLowerCase()] || '';
+                    
+                    content += `<div class="meaning-group">
+                        <div class="part-of-speech">
+                            ${posChinese || meaning.partOfSpeech}
+                        </div>
+                        <ol>`;
+                    
+                    // 翻译每个定义
+                    for (const def of meaning.definitions) {
+                        const translatedDef = await translateText(def.definition);
+                        
+                        content += `<li>
+                            <div class="definition">${def.definition}</div>
+                            <div class="definition-chinese">${translatedDef || '翻译失败'}</div>`;
+                        
+                        // 翻译示例（如果有）
+                        if (def.example) {
+                            const translatedExample = await translateText(def.example);
+                            content += `
+                                <div class="example">Example: ${def.example}</div>
+                                <div class="example-chinese">示例: ${translatedExample || '翻译失败'}</div>
+                            `;
+                        }
+                        
+                        content += `</li>`;
+                    }
+                    
+                    content += `</ol></div>`;
+                }
+                
+                content += '</div>';
+                translatedContent.innerHTML = content;
+            } catch (error) {
+                translatedContent.innerHTML = '<div class="error-translation">翻译服务暂时不可用</div>';
+                console.error('翻译内容加载失败:', error);
+            }
+        }
 
         // 播放音频
         function playAudio(url) {
-            new Audio(url).play();
+            // 停止当前播放的语音
+            stop();
+            
+            const audio = new Audio(url);
+            audio.play().catch(err => {
+                showError('播放失败，请点击按钮重试');
+            });
         }
 
         // 显示错误信息
@@ -764,11 +1074,17 @@
             return langNames[langCode] || langCode;
         }
 
-        // 初始化语音
-        if (speechSynth.onvoiceschanged !== undefined) {
-            speechSynth.onvoiceschanged = loadVoices;
-        }
-        setTimeout(loadVoices, 100);
+        // 监听备用服务选项变化
+        document.getElementById('useFallback').addEventListener('change', function(e) {
+            isUsingFallback = e.target.checked;
+            if (isUsingFallback) {
+                document.getElementById('voiceSelect').disabled = true;
+                updateStatus('已切换到备用语音服务');
+            } else {
+                document.getElementById('voiceSelect').disabled = false;
+                updateStatus('使用系统语音服务');
+            }
+        });
 
         // 监听播放次数选择变化
         document.getElementById('playCount').addEventListener('change', function(e) {
@@ -800,8 +1116,8 @@
             document.getElementById('statusDisplay').textContent = message;
         }
 
-        // 创建并播放音频
-        function createAndPlayUtterance(text) {
+        // 使用系统语音合成播放
+        function speakWithSystemTTS(text) {
             if (!text.trim()) {
                 updateStatus('没有文本可以朗读');
                 return;
@@ -809,21 +1125,22 @@
 
             utterance = new SpeechSynthesisUtterance(text);
             
+            // 使用选中的语音或默认语音
             if (currentVoice) {
                 utterance.voice = currentVoice;
+            } else if (voices.length > 0) {
+                utterance.voice = voices[0];
             }
             
             utterance.rate = parseFloat(document.getElementById('rate').value);
             utterance.pitch = parseFloat(document.getElementById('pitch').value);
             utterance.volume = parseFloat(document.getElementById('volume').value);
 
-            utterance.onend = function(event) {
-                console.log(`第 ${playCount} 次播放结束`);
-                
+            utterance.onend = function() {
                 if (totalPlayCount === -1 || playCount < totalPlayCount) {
                     playCount++;
                     updateStatus(`正在播放第 ${playCount} 次...`);
-                    setTimeout(() => createAndPlayUtterance(text), 500);
+                    setTimeout(() => speakWithSystemTTS(text), 500);
                 } else {
                     updateStatus('播放完成 ✓');
                 }
@@ -833,7 +1150,74 @@
                 updateStatus(`正在播放第 ${playCount} 次... 🔊`);
             };
 
+            utterance.onerror = function(event) {
+                updateStatus(`播放错误: ${event.error}`);
+                showError('语音播放失败，建议使用备用语音服务');
+                document.getElementById('useFallback').checked = true;
+            };
+
             speechSynth.speak(utterance);
+        }
+
+        // 使用第三方API播放（示例使用Google TTS的公开端点）
+        function speakWithFallbackTTS(text) {
+            if (!text.trim()) {
+                updateStatus('没有文本可以朗读');
+                return;
+            }
+            
+            // 停止任何正在播放的音频
+            if (fallbackAudio) {
+                fallbackAudio.pause();
+                fallbackAudio = null;
+            }
+            
+            updateStatus('正在准备语音... <span class="loading-indicator"></span>');
+            
+            try {
+                // 使用Google TTS的公开端点
+                const encodedText = encodeURIComponent(text);
+                const rate = parseFloat(document.getElementById('rate').value);
+                const speedParam = rate > 1 ? `&speed=${rate}` : '';
+                
+                // 构建音频URL
+                const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=en&client=tw-ob${speedParam}`;
+                
+                // 创建音频对象
+                fallbackAudio = new Audio(audioUrl);
+                
+                // 播放完成处理
+                fallbackAudio.onended = function() {
+                    if (totalPlayCount === -1 || playCount < totalPlayCount) {
+                        playCount++;
+                        updateStatus(`正在播放第 ${playCount} 次...`);
+                        setTimeout(() => speakWithFallbackTTS(text), 500);
+                    } else {
+                        updateStatus('播放完成 ✓');
+                        fallbackAudio = null;
+                    }
+                };
+                
+                // 播放错误处理
+                fallbackAudio.onerror = function() {
+                    updateStatus('备用语音服务播放失败');
+                    showError('语音服务暂时不可用，请稍后重试');
+                    fallbackAudio = null;
+                };
+                
+                // 开始播放
+                fallbackAudio.play().then(() => {
+                    updateStatus(`正在播放第 ${playCount} 次... 🔊`);
+                }).catch(err => {
+                    updateStatus('播放失败，请点击按钮重试');
+                    showError('需要用户交互才能播放音频');
+                    fallbackAudio = null;
+                });
+            } catch (error) {
+                updateStatus('语音生成失败');
+                showError('生成语音时发生错误');
+                fallbackAudio = null;
+            }
         }
 
         // 开始朗读
@@ -842,7 +1226,13 @@
             let text = document.getElementById('textToSpeak').value;
             playCount = 1;
             totalPlayCount = parseInt(document.getElementById('playCount').value);
-            createAndPlayUtterance(text);
+            
+            // 根据设置选择播放方式
+            if (isUsingFallback || !isSpeechSupported) {
+                speakWithFallbackTTS(text);
+            } else {
+                speakWithSystemTTS(text);
+            }
         }
 
         // 获取选中的文本
@@ -894,8 +1284,12 @@
             
             playCount = 1;
             totalPlayCount = parseInt(document.getElementById('playCount').value);
-            updateStatus('开始朗读选中文本...');
-            createAndPlayUtterance(selectedText);
+            
+            if (isUsingFallback || !isSpeechSupported) {
+                speakWithFallbackTTS(selectedText);
+            } else {
+                speakWithSystemTTS(selectedText);
+            }
         }
 
         // 朗读光标所在段落
@@ -910,25 +1304,50 @@
             
             playCount = 1;
             totalPlayCount = parseInt(document.getElementById('playCount').value);
-            updateStatus('开始朗读当前段落...');
-            createAndPlayUtterance(currentParagraph);
+            
+            if (isUsingFallback || !isSpeechSupported) {
+                speakWithFallbackTTS(currentParagraph);
+            } else {
+                speakWithSystemTTS(currentParagraph);
+            }
         }
 
         // 暂停朗读
         function pause() {
-            speechSynth.pause();
-            updateStatus('已暂停 ⏸️');
+            if (isUsingFallback || !isSpeechSupported) {
+                if (fallbackAudio) {
+                    fallbackAudio.pause();
+                    updateStatus('已暂停 ⏸️');
+                }
+            } else {
+                speechSynth.pause();
+                updateStatus('已暂停 ⏸️');
+            }
         }
 
         // 继续朗读
         function resume() {
-            speechSynth.resume();
-            updateStatus('继续播放... ▶️');
+            if (isUsingFallback || !isSpeechSupported) {
+                if (fallbackAudio) {
+                    fallbackAudio.play();
+                    updateStatus('继续播放... ▶️');
+                }
+            } else {
+                speechSynth.resume();
+                updateStatus('继续播放... ▶️');
+            }
         }
 
         // 停止朗读
         function stop() {
-            speechSynth.cancel();
+            if (isUsingFallback || !isSpeechSupported) {
+                if (fallbackAudio) {
+                    fallbackAudio.pause();
+                    fallbackAudio = null;
+                }
+            } else {
+                speechSynth.cancel();
+            }
             playCount = totalPlayCount;
             updateStatus('已停止 ⏹️');
         }
@@ -943,6 +1362,23 @@
                 this.style.transform = 'scale(1)';
             });
         });
+
+        // 初始化
+        window.onload = () => {
+            checkSpeechSupport();
+            if (isSpeechSupported) {
+                // 初始化语音合成事件监听
+                if (speechSynth.onvoiceschanged !== undefined) {
+                    speechSynth.onvoiceschanged = () => {
+                        voices = speechSynth.getVoices();
+                        initVoiceSelect(voices);
+                    };
+                }
+                loadVoicesWithRetry();
+            } else {
+                document.getElementById('voiceSelect').disabled = true;
+            }
+        };
     </script>
 </body>
 </html>
