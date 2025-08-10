@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多人聊天室</title>
+    <title>方块收集者</title>
     <!-- 引入Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入Font Awesome -->
@@ -17,277 +17,493 @@
                     colors: {
                         primary: '#4F46E5',
                         secondary: '#10B981',
-                        light: '#F3F4F6',
-                        dark: '#1F2937'
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
+                        danger: '#EF4444',
+                        warning: '#F59E0B',
+                    }
                 }
             }
         }
     </script>
     
-    <!-- 自定义工具类 -->
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .content-auto {
-                content-visibility: auto;
-            }
-            .scrollbar-hide {
-                scrollbar-width: none;
-                -ms-overflow-style: none;
-            }
-            .scrollbar-hide::-webkit-scrollbar {
-                display: none;
-            }
-            .message-animation {
-                animation: fadeIn 0.3s ease-in-out;
-            }
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(10px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
+    <style>
+        /* 游戏相关样式 */
+        #gameCanvas {
+            background-color: #1E293B;
+            display: block;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        
+        /* 游戏动画 */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .pulse-animation {
+            animation: pulse 1.5s infinite;
+        }
+        
+        /* 控制按钮样式 */
+        .control-btn {
+            user-select: none;
+            -webkit-user-select: none;
         }
     </style>
 </head>
-<body class="bg-gray-100 font-sans min-h-screen">
+<body class="bg-gray-100 min-h-screen font-sans text-gray-800">
     <div class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- 聊天室标题 -->
+        <!-- 游戏标题 -->
         <header class="text-center mb-6">
-            <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark flex items-center justify-center">
-                <i class="fa fa-comments text-primary mr-3"></i>
-                多人聊天室
+            <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-gray-800 flex items-center justify-center">
+                <i class="fa fa-cube text-primary mr-3"></i>
+                方块收集者
             </h1>
-            <p class="text-gray-500">与在线用户实时交流</p>
+            <p class="text-gray-600">移动挡板收集方块，避开红色炸弹！</p>
         </header>
         
-        <!-- 聊天室主体 -->
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col h-[70vh] max-h-[600px]">
-            <!-- 在线用户区域 -->
-            <div class="bg-primary text-white p-4 flex justify-between items-center">
-                <div>
-                    <span class="font-medium">在线用户:</span>
-                    <span id="userCount" class="ml-2 bg-white/20 px-2 py-1 rounded-full text-sm">0</span>
+        <!-- 游戏区域 -->
+        <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6">
+            <!-- 游戏信息 -->
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex gap-6">
+                    <div>
+                        <span class="text-gray-500 text-sm">分数</span>
+                        <div class="text-2xl font-bold text-primary" id="score">0</div>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 text-sm">级别</span>
+                        <div class="text-2xl font-bold text-secondary" id="level">1</div>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 text-sm">生命</span>
+                        <div class="text-2xl font-bold text-danger" id="lives">3</div>
+                    </div>
                 </div>
-                <div class="flex items-center">
-                    <input type="text" id="username" placeholder="输入你的昵称" 
-                           class="bg-white/20 text-white placeholder-white/70 rounded-l-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-white/50">
-                    <button id="joinButton" class="bg-white text-primary px-3 py-1 rounded-r-lg text-sm hover:bg-opacity-90 transition-colors">
-                        加入
-                    </button>
-                </div>
-            </div>
-            
-            <!-- 消息展示区域 -->
-            <div id="messageContainer" class="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
-                <!-- 系统消息 -->
-                <div class="message-animation flex justify-center">
-                    <span class="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
-                        请输入昵称并点击"加入"进入聊天室
-                    </span>
-                </div>
-            </div>
-            
-            <!-- 输入区域 -->
-            <div class="border-t p-4 bg-gray-50">
                 <div class="flex gap-2">
-                    <input type="text" id="messageInput" placeholder="请先加入聊天室..." disabled
-                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-gray-100">
-                    <button id="sendButton" class="bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center" disabled>
-                        <i class="fa fa-paper-plane mr-2"></i> 发送
+                    <button id="startBtn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fa fa-play mr-2"></i> 开始
+                    </button>
+                    <button id="resetBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fa fa-refresh mr-2"></i> 重置
                     </button>
                 </div>
+            </div>
+            
+            <!-- 游戏画布 -->
+            <div class="relative">
+                <canvas id="gameCanvas" width="800" height="500"></canvas>
+                
+                <!-- 游戏开始遮罩 -->
+                <div id="gameStartScreen" class="absolute inset-0 bg-black/70 rounded-lg flex flex-col items-center justify-center text-white">
+                    <h2 class="text-3xl font-bold mb-4 pulse-animation">准备开始</h2>
+                    <p class="mb-6 text-center px-6">使用 <span class="bg-white/20 px-2 py-1 rounded">左右箭头</span> 或 <span class="bg-white/20 px-2 py-1 rounded">A/D键</span> 移动挡板</p>
+                    <p class="mb-8 text-center px-6">收集 <span class="text-secondary">绿色方块</span> 加分，避开 <span class="text-danger">红色炸弹</span></p>
+                    <button id="startScreenBtn" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg transition-colors text-lg">
+                        点击开始游戏
+                    </button>
+                </div>
+                
+                <!-- 游戏结束遮罩 -->
+                <div id="gameOverScreen" class="absolute inset-0 bg-black/70 rounded-lg flex flex-col items-center justify-center text-white hidden">
+                    <h2 class="text-3xl font-bold mb-2 text-danger">游戏结束</h2>
+                    <p class="text-xl mb-2">最终得分: <span id="finalScore" class="font-bold">0</span></p>
+                    <p class="text-xl mb-6">达到级别: <span id="finalLevel" class="font-bold">1</span></p>
+                    <button id="restartBtn" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg transition-colors text-lg">
+                        再来一局
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 移动设备控制按钮 -->
+            <div class="flex justify-between mt-4 md:hidden">
+                <button id="leftBtn" class="control-btn bg-gray-200 hover:bg-gray-300 text-gray-800 w-20 h-12 rounded-lg flex items-center justify-center text-2xl">
+                    <i class="fa fa-arrow-left"></i>
+                </button>
+                <button id="rightBtn" class="control-btn bg-gray-200 hover:bg-gray-300 text-gray-800 w-20 h-12 rounded-lg flex items-center justify-center text-2xl">
+                    <i class="fa fa-arrow-right"></i>
+                </button>
             </div>
         </div>
         
-        <!-- 底部信息 -->
-        <footer class="text-center text-gray-500 text-sm mt-6">
-            <p>多人聊天室 &copy; 2023 | 按Enter发送消息</p>
-        </footer>
+        <!-- 游戏说明 -->
+        <div class="bg-white rounded-xl shadow-md p-4 md:p-6">
+            <h3 class="text-xl font-bold mb-3 text-gray-800">游戏说明</h3>
+            <ul class="space-y-2 text-gray-600">
+                <li class="flex items-start">
+                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                    <span>控制底部挡板收集掉落的绿色方块，每收集一个得10分</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                    <span>避开红色炸弹，碰到炸弹会失去一条生命</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                    <span>每获得100分升级一次，游戏速度会加快</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                    <span>初始有3条生命，生命耗尽游戏结束</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                    <span>电脑端使用左右箭头或A/D键控制，移动端使用屏幕按钮控制</span>
+                </li>
+            </ul>
+        </div>
     </div>
 
     <script>
         // 获取DOM元素
-        const messageContainer = document.getElementById('messageContainer');
-        const messageInput = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendButton');
-        const usernameInput = document.getElementById('username');
-        const joinButton = document.getElementById('joinButton');
-        const userCountElement = document.getElementById('userCount');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const levelElement = document.getElementById('level');
+        const livesElement = document.getElementById('lives');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const startScreenBtn = document.getElementById('startScreenBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const gameStartScreen = document.getElementById('gameStartScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScoreElement = document.getElementById('finalScore');
+        const finalLevelElement = document.getElementById('finalLevel');
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
         
-        // WebSocket连接
-        let socket;
-        let username = '';
-        let isConnected = false;
+        // 游戏常量
+        const PADDLE_WIDTH = 100;
+        const PADDLE_HEIGHT = 15;
+        const BLOCK_SIZE = 25;
+        const INITIAL_BLOCK_SPEED = 3;
+        const BLOCK_SPEED_INCREMENT = 0.5;
+        const INITIAL_SPAWN_RATE = 1500; // 毫秒
+        const MIN_SPAWN_RATE = 500; // 最小生成间隔
+        const SPAWN_RATE_DECREMENT = 100; // 每次升级减少的生成间隔
         
-        // 生成时间戳
-        function getTimeString() {
-            const now = new Date();
-            return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        // 游戏变量
+        let paddleX = (canvas.width - PADDLE_WIDTH) / 2;
+        let paddleSpeed = 8;
+        let isMovingLeft = false;
+        let isMovingRight = false;
+        let blocks = [];
+        let score = 0;
+        let level = 1;
+        let lives = 3;
+        let gameRunning = false;
+        let gameLoop;
+        let spawnInterval;
+        
+        // 方块类型
+        const BLOCK_TYPES = {
+            GOOD: { color: '#10B981', points: 10 }, // 绿色方块，加分
+            BAD: { color: '#EF4444', points: -1 }   // 红色炸弹，减命
+        };
+        
+        // 初始化游戏
+        function initGame() {
+            paddleX = (canvas.width - PADDLE_WIDTH) / 2;
+            blocks = [];
+            score = 0;
+            level = 1;
+            lives = 3;
+            
+            // 更新显示
+            updateScore();
+            updateLevel();
+            updateLives();
+            
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
         
-        // 添加消息到容器
-        function addMessage(content, isOwn = false, sender = username, isSystem = false) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message-animation';
+        // 开始游戏
+        function startGame() {
+            if (gameRunning) return;
             
-            if (isSystem) {
-                // 系统消息样式
-                messageDiv.innerHTML = `
-                    <div class="flex justify-center">
-                        <span class="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
-                            ${content}
-                        </span>
-                    </div>
-                `;
-            } else if (isOwn) {
-                // 自己发送的消息样式
-                messageDiv.innerHTML = `
-                    <div class="flex justify-end">
-                        <div class="max-w-[80%] bg-primary text-white p-3 rounded-lg rounded-tl-none shadow-sm">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="font-medium text-sm">${sender}</span>
-                                <span class="text-xs opacity-70">${getTimeString()}</span>
-                            </div>
-                            <p>${content}</p>
-                        </div>
-                    </div>
-                `;
-            } else {
-                // 他人发送的消息样式
-                messageDiv.innerHTML = `
-                    <div class="flex justify-start">
-                        <div class="max-w-[80%] bg-gray-200 text-gray-800 p-3 rounded-lg rounded-tr-none shadow-sm">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="font-medium text-sm">${sender}</span>
-                                <span class="text-xs opacity-70">${getTimeString()}</span>
-                            </div>
-                            <p>${content}</p>
-                        </div>
-                    </div>
-                `;
-            }
+            gameStartScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            gameRunning = true;
             
-            messageContainer.appendChild(messageDiv);
-            // 滚动到底部
-            messageContainer.scrollTop = messageContainer.scrollHeight;
+            // 开始游戏循环
+            gameLoop = setInterval(updateGame, 16); // 约60fps
+            
+            // 设置方块生成间隔
+            setupBlockSpawning();
         }
         
-        // 连接到WebSocket服务器
-        function connect() {
-            const newUsername = usernameInput.value.trim();
-            if (!newUsername) {
-                alert('请输入昵称');
-                return;
-            }
+        // 停止游戏
+        function stopGame() {
+            gameRunning = false;
+            clearInterval(gameLoop);
+            clearInterval(spawnInterval);
+        }
+        
+        // 游戏结束
+        function gameOver() {
+            stopGame();
+            finalScoreElement.textContent = score;
+            finalLevelElement.textContent = level;
+            gameOverScreen.classList.remove('hidden');
+        }
+        
+        // 重置游戏
+        function resetGame() {
+            stopGame();
+            initGame();
+            gameStartScreen.classList.remove('hidden');
+        }
+        
+        // 设置方块生成
+        function setupBlockSpawning() {
+            clearInterval(spawnInterval);
             
-            username = newUsername;
+            // 根据当前级别调整生成速率
+            const spawnRate = Math.max(
+                MIN_SPAWN_RATE, 
+                INITIAL_SPAWN_RATE - (level - 1) * SPAWN_RATE_DECREMENT
+            );
             
-            // 连接WebSocket服务器
-            // 注意：实际部署时需要替换为你的服务器地址
-            socket = new WebSocket('ws://localhost:8080');
-            
-            // 连接打开时
-            socket.onopen = function() {
-                isConnected = true;
-                addMessage(`成功连接到聊天室`, false, "系统", true);
-                
-                // 发送加入消息
-                socket.send(JSON.stringify({
-                    type: 'join',
-                    username: username
-                }));
-                
-                // 更新UI状态
-                usernameInput.disabled = true;
-                joinButton.disabled = true;
-                messageInput.disabled = false;
-                sendButton.disabled = false;
-                messageInput.placeholder = "输入消息...";
-                messageInput.focus();
-            };
-            
-            // 收到消息时
-            socket.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                
-                switch(data.type) {
-                    case 'message':
-                        addMessage(data.content, data.username === username, data.username);
-                        break;
-                    case 'system':
-                        addMessage(data.content, false, "系统", true);
-                        break;
-                    case 'userCount':
-                        userCountElement.textContent = data.count;
-                        break;
+            // 定时生成方块
+            spawnInterval = setInterval(() => {
+                if (gameRunning) {
+                    spawnBlock();
                 }
-            };
-            
-            // 连接关闭时
-            socket.onclose = function() {
-                isConnected = false;
-                addMessage(`与服务器断开连接`, false, "系统", true);
-                
-                // 重置UI状态
-                usernameInput.disabled = false;
-                joinButton.disabled = false;
-                messageInput.disabled = true;
-                sendButton.disabled = true;
-                messageInput.placeholder = "请先加入聊天室...";
-            };
-            
-            // 发生错误时
-            socket.onerror = function(error) {
-                addMessage(`连接错误: ${error}`, false, "系统", true);
-            };
+            }, spawnRate);
         }
         
-        // 发送消息
-        function sendMessage() {
-            if (!isConnected) return;
+        // 生成新方块
+        function spawnBlock() {
+            // 随机决定方块类型 (80% 好方块，20% 坏方块)
+            const isGoodBlock = Math.random() < 0.8;
+            const blockType = isGoodBlock ? BLOCK_TYPES.GOOD : BLOCK_TYPES.BAD;
             
-            const message = messageInput.value.trim();
-            if (message) {
-                // 发送消息到服务器
-                socket.send(JSON.stringify({
-                    type: 'message',
-                    username: username,
-                    content: message
-                }));
+            // 随机水平位置
+            const x = Math.random() * (canvas.width - BLOCK_SIZE);
+            
+            // 创建新方块
+            const newBlock = {
+                x: x,
+                y: 0,
+                size: BLOCK_SIZE,
+                type: blockType,
+                // 根据级别调整速度
+                speed: INITIAL_BLOCK_SPEED + (level - 1) * BLOCK_SPEED_INCREMENT
+            };
+            
+            blocks.push(newBlock);
+        }
+        
+        // 更新游戏状态
+        function updateGame() {
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 移动挡板
+            if (isMovingLeft && paddleX > 0) {
+                paddleX -= paddleSpeed;
+            }
+            if (isMovingRight && paddleX < canvas.width - PADDLE_WIDTH) {
+                paddleX += paddleSpeed;
+            }
+            
+            // 绘制挡板
+            drawPaddle();
+            
+            // 更新和绘制方块
+            updateBlocks();
+            
+            // 检查级别提升
+            checkLevelUp();
+        }
+        
+        // 绘制挡板
+        function drawPaddle() {
+            ctx.fillStyle = '#4F46E5'; // 主色调
+            ctx.fillRect(paddleX, canvas.height - PADDLE_HEIGHT - 10, PADDLE_WIDTH, PADDLE_HEIGHT);
+            
+            // 挡板装饰
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(paddleX + 5, canvas.height - PADDLE_HEIGHT - 8, PADDLE_WIDTH - 10, PADDLE_HEIGHT - 4);
+        }
+        
+        // 更新方块
+        function updateBlocks() {
+            for (let i = blocks.length - 1; i >= 0; i--) {
+                const block = blocks[i];
                 
-                // 清空输入框
-                messageInput.value = '';
+                // 移动方块
+                block.y += block.speed;
+                
+                // 绘制方块
+                drawBlock(block);
+                
+                // 检查是否碰到挡板
+                if (checkBlockCollision(block)) {
+                    handleBlockCollection(block);
+                    blocks.splice(i, 1);
+                    continue;
+                }
+                
+                // 检查是否超出屏幕底部
+                if (block.y > canvas.height) {
+                    // 如果是好方块没接住，扣分
+                    if (block.type === BLOCK_TYPES.GOOD) {
+                        score = Math.max(0, score - 5);
+                        updateScore();
+                    }
+                    blocks.splice(i, 1);
+                }
             }
         }
         
-        // 事件监听
-        joinButton.addEventListener('click', connect);
-        sendButton.addEventListener('click', sendMessage);
+        // 绘制方块
+        function drawBlock(block) {
+            ctx.fillStyle = block.type.color;
+            ctx.fillRect(block.x, block.y, block.size, block.size);
+            
+            // 方块装饰
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(block.x + 2, block.y + 2, block.size - 4, block.size - 4);
+        }
         
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && isConnected) {
-                sendMessage();
+        // 检查方块与挡板碰撞
+        function checkBlockCollision(block) {
+            return (
+                block.y + block.size >= canvas.height - PADDLE_HEIGHT - 10 &&
+                block.y <= canvas.height &&
+                block.x + block.size >= paddleX &&
+                block.x <= paddleX + PADDLE_WIDTH
+            );
+        }
+        
+        // 处理方块收集
+        function handleBlockCollection(block) {
+            if (block.type === BLOCK_TYPES.GOOD) {
+                // 收集到好方块，加分
+                score += block.type.points;
+                updateScore();
+            } else {
+                // 碰到坏方块，减命
+                lives--;
+                updateLives();
+                
+                // 生命耗尽，游戏结束
+                if (lives <= 0) {
+                    gameOver();
+                }
+            }
+        }
+        
+        // 检查级别提升
+        function checkLevelUp() {
+            const newLevel = Math.floor(score / 100) + 1;
+            if (newLevel > level) {
+                level = newLevel;
+                updateLevel();
+                setupBlockSpawning(); // 调整生成速率
+                
+                // 每升3级加一条命
+                if (level % 3 === 0) {
+                    lives++;
+                    updateLives();
+                }
+            }
+        }
+        
+        // 更新分数显示
+        function updateScore() {
+            scoreElement.textContent = score;
+        }
+        
+        // 更新级别显示
+        function updateLevel() {
+            levelElement.textContent = level;
+        }
+        
+        // 更新生命显示
+        function updateLives() {
+            livesElement.textContent = lives;
+        }
+        
+        // 事件监听 - 键盘控制
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
+                isMovingLeft = true;
+            }
+            if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
+                isMovingRight = true;
             }
         });
         
-        usernameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !isConnected) {
-                connect();
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
+                isMovingLeft = false;
+            }
+            if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
+                isMovingRight = false;
             }
         });
         
-        // 页面关闭时关闭连接
-        window.addEventListener('beforeunload', function() {
-            if (isConnected) {
-                socket.send(JSON.stringify({
-                    type: 'leave',
-                    username: username
-                }));
-                socket.close();
-            }
+        // 事件监听 - 移动设备触摸控制
+        leftBtn.addEventListener('touchstart', () => {
+            isMovingLeft = true;
         });
+        
+        leftBtn.addEventListener('touchend', () => {
+            isMovingLeft = false;
+        });
+        
+        rightBtn.addEventListener('touchstart', () => {
+            isMovingRight = true;
+        });
+        
+        rightBtn.addEventListener('touchend', () => {
+            isMovingRight = false;
+        });
+        
+        // 防止触摸事件的默认行为（如页面滚动）
+        [leftBtn, rightBtn].forEach(btn => {
+            btn.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+            });
+        });
+        
+        // 鼠标点击控制按钮（用于测试）
+        leftBtn.addEventListener('mousedown', () => {
+            isMovingLeft = true;
+        });
+        
+        leftBtn.addEventListener('mouseup', () => {
+            isMovingLeft = false;
+        });
+        
+        leftBtn.addEventListener('mouseleave', () => {
+            isMovingLeft = false;
+        });
+        
+        rightBtn.addEventListener('mousedown', () => {
+            isMovingRight = true;
+        });
+        
+        rightBtn.addEventListener('mouseup', () => {
+            isMovingRight = false;
+        });
+        
+        rightBtn.addEventListener('mouseleave', () => {
+            isMovingRight = false;
+        });
+        
+        // 游戏控制按钮
+        startBtn.addEventListener('click', startGame);
+        resetBtn.addEventListener('click', resetGame);
+        startScreenBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', resetGame);
+        
+        // 初始化游戏
+        window.addEventListener('load', initGame);
     </script>
 </body>
 </html>
+    
