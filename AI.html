@@ -14,6 +14,13 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"He
 .ai{background:var(--ai);color:var(--text);}
 .typing::after{content:'▋';animation:blink 1s infinite;}
 @keyframes blink{50%{opacity:0;}}
+/* ---- AI 思考动画 ---- */
+.thinking{display:flex;justify-content:center;margin:.3rem 0;}
+.thinking div{width:6px;height:6px;margin:0 2px;background:#888;border-radius:50%;animation:dot 1.4s infinite ease-in-out both;}
+.thinking div:nth-child(1){animation-delay:-0.32s;}
+.thinking div:nth-child(2){animation-delay:-0.16s;}
+@keyframes dot{0%,80%,100%{transform:scale(0);opacity:.5;}40%{transform:scale(1);opacity:1;}}
+/* ------------------- */
 #bottom{display:flex;border-top:1px solid #ddd;background:#fff;}
 #input{flex:1;border:none;padding:.8rem 1rem;font-size:1rem;outline:none;}
 #sendBtn{border:none;background:var(--user);color:#fff;padding:0 1.2rem;cursor:pointer;}
@@ -39,10 +46,22 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"He
   let messages = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
   render();
 
-  // SiliconCloud 配置
-  const API_KEY   = 'sk-egpaeaztksryiwbebciehvacervfrlhgctuuwpmmbmacrubb';        // ← 替换为你的 sk-xxx
+  const API_KEY   = 'sk-egpaeaztksryiwbebciehvacervfrlhgctuuwpmmbmacrubb'; // ← 替换为你的 sk-xxx
   const BASE_URL  = 'https://api.siliconflow.cn';
-  const MODEL_ID  = 'Qwen/Qwen3-8B';  // 可换成 Qwen/Qwen2.5-7B-Instruct 等
+  const MODEL_ID  = 'Qwen/Qwen3-8B';
+
+  let thinkingEl = null;   // 当前“思考中”动画节点
+
+  /* 创建“AI 正在思考”动画 */
+  function createThinking() {
+    const wrap = document.createElement('div');
+    wrap.className = 'thinking';
+    ['','',''].forEach(() => {
+      const dot = document.createElement('div');
+      wrap.appendChild(dot);
+    });
+    return wrap;
+  }
 
   async function send() {
     const text = input.value.trim();
@@ -51,16 +70,32 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"He
     input.value = '';
     sendBtn.disabled = true;
 
+    // 创建 AI 气泡并插入“思考中”动画
+    const aiBubble = document.createElement('div');
+    aiBubble.className = 'msg ai';
+    thinkingEl = createThinking();
+    aiBubble.appendChild(thinkingEl);
+    chat.appendChild(aiBubble);
+    chat.scrollTop = chat.scrollHeight;
+
     try {
       const reply = await callSiliconCloud(text);
-      addMessage('ai', reply);
+      thinkingEl.remove();           // 移除动画
+      thinkingEl = null;
+      await typeWriter(aiBubble, reply);
+      messages.push({ role: 'ai', text: reply });
+      save();
     } catch (e) {
-      addMessage('ai', '❌ 调用失败：' + e.message);
+      if (thinkingEl) thinkingEl.remove();
+      aiBubble.textContent = '❌ 调用失败：' + e.message;
+      messages.push({ role: 'ai', text: aiBubble.textContent });
+      save();
     } finally {
       sendBtn.disabled = false;
     }
   }
 
+  /* 其余函数保持不变 */
   function addMessage(role, text) {
     messages.push({ role, text });
     render();
@@ -80,18 +115,16 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"He
     chat.appendChild(div);
   }
 
-  /* 打字机效果 */
-  async function typeWriter(element, text, speed = 30) {
-    element.textContent = '';
-    element.classList.add('typing');
+  async function typeWriter(el, text, speed = 30) {
+    el.textContent = '';
+    el.classList.add('typing');
     for (let i = 0; i <= text.length; i++) {
-      element.textContent = text.slice(0, i);
+      el.textContent = text.slice(0, i);
       await new Promise(r => setTimeout(r, speed));
     }
-    element.classList.remove('typing');
+    el.classList.remove('typing');
   }
 
-  /* 真正调用 SiliconCloud Chat API */
   async function callSiliconCloud(prompt) {
     const body = {
       model: MODEL_ID,
@@ -103,7 +136,6 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"He
       max_tokens: 1024,
       stream: false
     };
-
     const res = await fetch(`${BASE_URL}/v1/chat/completions`, {
       method: 'POST',
       headers: {
@@ -112,12 +144,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"He
       },
       body: JSON.stringify(body)
     });
-
     if (!res.ok) {
       const msg = await res.text();
       throw new Error(`HTTP ${res.status}: ${msg}`);
     }
-
     const data = await res.json();
     return data.choices?.[0]?.message?.content || '(无返回)';
   }
