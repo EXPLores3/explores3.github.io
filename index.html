@@ -125,6 +125,27 @@
             box-shadow: 0 6px 10px rgba(46, 204, 113, 0.4);
         }
         
+        .btn-AI{
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: 0 4px 6px rgba(46, 204, 113, 0.3);
+        }
+        
+        .btn-AI:hover {
+            background-color: #27ae60;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 10px rgba(46, 204, 113, 0.4);
+        }
+        
         .btn-english {
             background-color: #e67e22;
             box-shadow: 0 4px 6px rgba(230, 126, 34, 0.3);
@@ -361,9 +382,6 @@
         <div class="container hero-content">
             <h1>欢迎来到我的个人主页</h1>
             <p>我是一名热爱学习和分享的开发者，致力于创造有价值的项目和工具，帮助他人提升学习效率。</p>
-            <button class="btn btn-english" onclick="window.open('english-learner.html', '_blank')">
-                <i class="fas fa-language"></i> 打开英语学习系统
-            </button>
         </div>
     </section>
     
@@ -375,9 +393,6 @@
                     <p>你好！我是一名全栈开发者，拥有多年的编程经验和项目管理经验。我热衷于学习新技术，并将其应用到实际项目中。</p>
                     <p>除了编程，我还对语言学习有着浓厚的兴趣，特别是英语学习。我相信技术可以极大地提升学习效率，因此开发了这款英语学习系统，希望能帮助更多人轻松学习英语。</p>
                     <p>如果你对我的项目感兴趣，或者有任何合作想法，欢迎随时联系我。</p>
-                    <button class="btn btn-english" style="margin-top: 1rem;" onclick="window.open('english-learner.html', '_blank')">
-                        <i class="fas fa-book"></i> 开始英语学习
-                    </button>
                 </div>
                 <div class="about-image">
                     <img src="https://picsum.photos/300/300" alt="个人照片">
@@ -443,9 +458,9 @@
                         <i class="fas fa-notes-medical"></i>
                     </div>
                     <div class="project-info">
-                        <h3>笔记管理应用</h3>
-                        <p>一款功能丰富的笔记管理工具，支持富文本编辑、标签分类和云同步功能。</p>
-                        <button class="btn" disabled>
+                        <h3>AI问答应用</h3>
+                        <p>一款功能丰富的AI工具，支持聊天、生成代码和写作功能。</p>
+                        <button class="btn btn-AI" disabled>
                             <i class="fas fa-lock"></i> 开发中
                         </button>
                     </div>
@@ -477,9 +492,6 @@
                     <a href="#" class="contact-link"><i class="fas fa-envelope"></i></a>
                     <a href="#" class="contact-link"><i class="fab fa-github"></i></a>
                 </div>
-                <button class="btn btn-english" onclick="window.open('english-learner.html', '_blank')">
-                    <i class="fas fa-language"></i> 尝试英语学习系统
-                </button>
             </div>
         </div>
     </section>
