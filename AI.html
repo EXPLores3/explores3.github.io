@@ -1,1 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>AI问答程序</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f9fbfd;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+        .user {
+            background: #d1e7dd;
+            align-self: flex-end;
+            margin-left: 20px;
+        }
+        .ai {
+            background: #e2e3e5;
+            align-self: flex-start;
+            margin-right: 20px;
+        }
+        .input-area {
+            display: flex;
+            padding: 15px;
+            background: #fff;
+            border-top: 1px solid #ddd;
+        }
+        .input-area input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .input-area button {
+            margin-left: 10px;
+            padding: 10px 20px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .input-area button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="chat-box" id="chatBox">
+            <div class="message ai">你好！我是AI助手，有什么问题吗？</div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="输入您的问题..." />
+            <button onclick="sendMessage()">发送</button>
+        </div>
+    </div>
 
+    <script>
+        const chatBox = document.getElementById('chatBox');
+        const userInput = document.getElementById('userInput');
+
+        async function sendMessage() {
+            const userQuestion = userInput.value.trim();
+            if (!userQuestion) return;
+
+            // 显示用户消息
+            addMessage(userQuestion, 'user');
+
+            // 清空输入框
+            userInput.value = '';
+
+            // 发送请求到后端
+            const url = 'https://api.siliconflow.cn/v1/chat/completions';
+            const options = {
+              method: 'POST',
+              headers: {Authorization: 'Bearer sk-egpaeaztksryiwbebciehvacervfrlhgctuuwpmmbmacrubb', 'Content-Type': 'application/json'},
+              body: '{"model":"deepseek-ai/DeepSeek-R1-0528-Qwen3-8B","max_tokens":512,"enable_thinking":true,"thinking_budget":4096,"min_p":0.05,"temperature":0.7,"top_p":0.7,"top_k":50,"frequency_penalty":0.5,"n":1,"messages":[{"role":"user","content":"{ question: userQuestion }"}]}'
+            };
+            //cwdin
+            try {
+              const response = await fetch(url, options);
+              const data = await response.json();
+              console.log(data);
+            } catch (error) {
+              console.error(error);
+            }
+    </script>
+</body>
+</html>
