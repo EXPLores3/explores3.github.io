@@ -5,16 +5,37 @@
 <title>SiliconCloud AI 助手</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-:root{--bg:#f5f6fa;--user:#0078ff;--ai:#e5e5ea;--text:#111;}
+:root{--bg:#f5f6fa;--user:#0078ff;--ai:#e5e5ea;--text:#111;--success:#4caf50;}
 *{box-sizing:border-box;}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);display:flex;flex-direction:column;height:100vh;}
 header{background:#fff;border-bottom:1px solid #ddd;padding:.5rem 1rem;font-size:.9rem;display:flex;justify-content:space-between;align-items:center;}
-header button{background:var(--user);color:#fff;border:none;padding:.3rem .6rem;border-radius:4px;cursor:pointer;}
+header .credit-container {
+  position: relative;
+}
+header #creditInfo {
+  margin-right: 1rem;
+}
+header #resetInfo {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.2rem;
+}
+header button{background:var(--user);color:#fff;border:none;padding:.3rem .6rem;border-radius:4px;cursor:pointer;transition:background 0.3s;}
 header button:disabled{background:#aaa;cursor:not-allowed;}
+header button:not(:disabled):hover{background:#0056b3;}
 #chat{flex:1;overflow-y:auto;padding:1rem;}
 .msg{max-width:70%;margin:.5rem;padding:.6rem .8rem;border-radius:1rem;line-height:1.4;white-space:pre-wrap;word-break:break-word;}
 .user{background:var(--user);color:#fff;align-self:flex-end;margin-left:auto;}
 .ai{background:var(--ai);color:var(--text);}
+.system {
+  background: #e3f2fd;
+  color: #0d47a1;
+  max-width: 90%;
+  margin: 0.3rem auto;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+  border-radius: 4px;
+}
 .thinking{display:flex;justify-content:center;margin:.3rem 0;}
 .thinking div{width:6px;height:6px;margin:0 2px;background:#888;border-radius:50%;animation:dot 1.4s infinite ease-in-out both;}
 .thinking div:nth-child(1){animation-delay:-0.32s;}
@@ -22,14 +43,46 @@ header button:disabled{background:#aaa;cursor:not-allowed;}
 @keyframes dot{0%,80%,100%{transform:scale(0);opacity:.5;}40%{transform:scale(1);opacity:1;}}
 #bottom{display:flex;border-top:1px solid #ddd;background:#fff;}
 #input{flex:1;border:none;padding:.8rem 1rem;font-size:1rem;outline:none;}
-#sendBtn{border:none;background:var(--user);color:#fff;padding:0 1.2rem;cursor:pointer;}
+#sendBtn{border:none;background:var(--user);color:#fff;padding:0 1.2rem;cursor:pointer;transition:background 0.3s;}
 #sendBtn:disabled{background:#aaa;cursor:not-allowed;}
+#sendBtn:not(:disabled):hover{background:#0056b3;}
+
+/* 通知提示样式 */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
+.toast.success {
+  background: rgba(76, 175, 80, 0.9);
+}
+
+.toast.error {
+  background: rgba(244, 67, 54, 0.9);
+}
 </style>
 </head>
 <body>
-
 <header>
-  <span id="creditInfo">积分：0</span>
+  <div class="credit-container">
+    <span id="creditInfo">积分：0</span>
+    <div id="resetInfo">今日剩余：--:--:-- 重置</div>
+  </div>
   <button id="checkInBtn" disabled>今日已签到</button>
 </header>
 
@@ -40,6 +93,8 @@ header button:disabled{background:#aaa;cursor:not-allowed;}
   <button id="sendBtn">发送</button>
 </div>
 
+<div id="toast" class="toast"></div>
+
 <script>
 (() => {
   /* ===== 工具封装 ===== */
@@ -49,42 +104,121 @@ header button:disabled{background:#aaa;cursor:not-allowed;}
   const sendBtn = $('sendBtn');
   const creditInfo = $('creditInfo');
   const checkInBtn = $('checkInBtn');
+  const resetInfo = $('resetInfo');
+  const toast = $('toast');
 
+  /* ===== 常量定义 ===== */
   const CHAT_KEY   = 'sf-chat';
   const CREDIT_KEY = 'sf-credit';
   const CHECK_KEY  = 'sf-check-date';
-
+  const CREDIT_TIMESTAMP_KEY = 'sf-credit-timestamp';
+  
   const MAX_CHAT = 10;          // 最多保存 10 条对话
   const DAILY_CREDIT = 5;       // 每天签到 5 积分
 
+  /* ===== 数据初始化 ===== */
   let messages = JSON.parse(localStorage.getItem(CHAT_KEY) || '[]');
-  let credit   = +(localStorage.getItem(CREDIT_KEY) || 0);
+  let creditData = JSON.parse(localStorage.getItem(CREDIT_KEY) || '{"amount": 0}');
+  let creditTimestamp = localStorage.getItem(CREDIT_TIMESTAMP_KEY) || new Date().toISOString();
+
+  /* ===== 工具函数 ===== */
+  // 显示通知提示
+  function showToast(message, type = 'info') {
+    toast.textContent = message;
+    toast.className = `toast ${type}`;
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3000);
+  }
+
+  // 获取当前日期字符串
+  function todayStr() { 
+    return new Date().toLocaleDateString(); 
+  }
+
+  // 检查是否需要重置积分（跨天）
+  function checkCreditReset() {
+    const lastDate = new Date(creditTimestamp).toLocaleDateString();
+    const currentDate = todayStr();
+    
+    // 如果日期不同，重置积分
+    if (lastDate !== currentDate) {
+      creditData = { amount: 0 };
+      saveCreditData();
+      showToast('积分已重置，今日可重新签到获取积分', 'success');
+      return true;
+    }
+    return false;
+  }
+
+  // 计算距离明天零点的剩余时间
+  function getTimeUntilReset() {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    const diff = tomorrow - now;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  // 更新重置时间显示
+  function updateResetTime() {
+    resetInfo.textContent = `今日剩余：${getTimeUntilReset()} 重置`;
+  }
 
   /* ===== 签到逻辑 ===== */
-  function todayStr() { return new Date().toLocaleDateString(); }
   function initCheckIn() {
-    const last = localStorage.getItem(CHECK_KEY);
-    if (last === todayStr()) {
+    // 先检查是否需要重置积分
+    checkCreditReset();
+    
+    const lastCheckIn = localStorage.getItem(CHECK_KEY);
+    if (lastCheckIn === todayStr()) {
       checkInBtn.disabled = true;
       checkInBtn.textContent = '今日已签到';
     } else {
       checkInBtn.disabled = false;
       checkInBtn.textContent = '签到领积分';
-      checkInBtn.onclick = () => {
-        credit += DAILY_CREDIT;
-        localStorage.setItem(CREDIT_KEY, credit);
-        localStorage.setItem(CHECK_KEY, todayStr());
-        updateCreditUI();
-        initCheckIn();          // 刷新按钮状态
-      };
+      checkInBtn.onclick = handleCheckIn;
     }
   }
 
-  /* ===== 积分 & 对话 UI ===== */
-  function updateCreditUI() {
-    creditInfo.textContent = `积分：${credit}`;
+  function handleCheckIn() {
+    creditData.amount += DAILY_CREDIT;
+    saveCreditData();
+    localStorage.setItem(CHECK_KEY, todayStr());
+    updateCreditUI();
+    checkInBtn.disabled = true;
+    checkInBtn.textContent = '今日已签到';
+    showToast(`签到成功，获得 ${DAILY_CREDIT} 积分`, 'success');
   }
 
+  /* ===== 积分管理 ===== */
+  function saveCreditData() {
+    creditTimestamp = new Date().toISOString();
+    localStorage.setItem(CREDIT_KEY, JSON.stringify(creditData));
+    localStorage.setItem(CREDIT_TIMESTAMP_KEY, creditTimestamp);
+  }
+
+  function updateCreditUI() {
+    creditInfo.textContent = `积分：${creditData.amount}`;
+    // 控制发送按钮状态
+    sendBtn.disabled = creditData.amount <= 0;
+    input.disabled = creditData.amount <= 0;
+    if (creditData.amount <= 0) {
+      input.placeholder = "积分不足，请先签到获取积分";
+    } else {
+      input.placeholder = "输入问题，按 Enter 发送（每条消耗 1 积分）";
+    }
+  }
+
+  /* ===== 对话管理 ===== */
   function saveMessages() {
     // 仅保留最近 MAX_CHAT 条
     if (messages.length > MAX_CHAT) messages = messages.slice(-MAX_CHAT);
@@ -104,6 +238,14 @@ header button:disabled{background:#aaa;cursor:not-allowed;}
     chat.appendChild(div);
   }
 
+  function appendSystemMessage(text) {
+    const div = document.createElement('div');
+    div.className = 'system';
+    div.textContent = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
   async function typeWriter(el, text, speed = 30) {
     el.textContent = '';
     el.classList.add('typing');
@@ -115,29 +257,33 @@ header button:disabled{background:#aaa;cursor:not-allowed;}
   }
 
   /* ===== 发送消息 ===== */
-  const API_KEY  = 'sk-egpaeaztksryiwbebciehvacervfrlhgctuuwpmmbmacrubb'; // ← 替换
+  const API_KEY  = 'sk-egpaeaztksryiwbebciehvacervfrlhgctuuwpmmbmacrubb'; // 建议替换为后端代理
   const BASE_URL = 'https://api.siliconflow.cn';
   const MODEL_ID = 'THUDM/GLM-Z1-9B-0414';
 
   async function send() {
     const text = input.value.trim();
     if (!text) return;
-    if (credit <= 0) {
-      alert('积分不足，请先签到或明天再来！');
+    if (creditData.amount <= 0) {
+      showToast('积分不足，请先签到获取积分', 'error');
       return;
     }
 
-    credit -= 1;
-    localStorage.setItem(CREDIT_KEY, credit);
+    // 扣减积分
+    creditData.amount -= 1;
+    saveCreditData();
     updateCreditUI();
 
+    // 添加用户消息
     messages.push({ role: 'user', text });
     saveMessages();
     renderChat();
 
+    // 清空输入框并禁用发送按钮
     input.value = '';
     sendBtn.disabled = true;
 
+    // 显示思考中状态
     const aiBubble = document.createElement('div');
     aiBubble.className = 'msg ai';
     const thinking = document.createElement('div');
@@ -165,31 +311,58 @@ header button:disabled{background:#aaa;cursor:not-allowed;}
           stream: false
         })
       });
+      
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const reply = data.choices?.[0]?.message?.content || '(无返回)';
+      
+      // 移除思考动画，显示回复
       thinking.remove();
       await typeWriter(aiBubble, reply);
       messages.push({ role: 'ai', text: reply });
+      
     } catch (e) {
       thinking.remove();
-      aiBubble.textContent = '❌ 调用失败：' + e.message;
-      messages.push({ role: 'ai', text: aiBubble.textContent });
+      const errorMsg = `❌ 调用失败：${e.message}`;
+      aiBubble.textContent = errorMsg;
+      messages.push({ role: 'ai', text: errorMsg });
+      showToast('发送失败，请稍后再试', 'error');
+      
+      // 失败时返还积分
+      creditData.amount += 1;
+      saveCreditData();
+      updateCreditUI();
     } finally {
       saveMessages();
-      sendBtn.disabled = false;
+      sendBtn.disabled = creditData.amount <= 0;
     }
   }
 
   /* ===== 初始化 ===== */
-  updateCreditUI();
-  initCheckIn();
-  renderChat();
+  function init() {
+    // 显示欢迎信息（如果是新用户）
+    if (messages.length === 0) {
+      appendSystemMessage('欢迎使用 SiliconCloud AI 助手！每天签到可获得 5 积分，每条消息消耗 1 积分。');
+    }
+    
+    // 更新UI
+    updateCreditUI();
+    initCheckIn();
+    renderChat();
+    updateResetTime();
+    
+    // 每秒更新一次重置时间
+    setInterval(updateResetTime, 1000);
 
-  sendBtn.onclick = send;
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !sendBtn.disabled) send();
-  });
+    // 绑定事件
+    sendBtn.onclick = send;
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !sendBtn.disabled) send();
+    });
+  }
+
+  // 启动应用
+  init();
 })();
 </script>
 
